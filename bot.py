@@ -160,6 +160,7 @@ def handle_voice(message):
         
         response = client.models.generate_content(
             model='gemini-3.8-flash',
+
             contents=[audio_file_ref, "Άκουσε το φωνητικό μήνυμα και δώσε την ανάλυση της παραγγελίας."],
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_INSTRUCTIONS,
