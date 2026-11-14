@@ -11,8 +11,8 @@ logging.basicConfig(
 )
 
 # Ανάγνωση του κλειδιού από τις μεταβλητές περιβάλλοντος (Environment Variables)
-API_KEY = os.environ.get("AQ.Ab8RN6JFhlLRnnQ7CT4CiNuVEAOQG1uccprPqkzk5vXp3_XT9w")
-TELEGRAM_TOKEN = os.environ.get("9026273282:AAFkBnN0kIeuD4oHzDlecQF8psH8hNyiSeY")
+API_KEY = os.environ.get("GEMINI_API_KEY")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 
 if not API_KEY:
     raise ValueError("Δεν βρέθηκε το GEMINI_API_KEY στις μεταβλητές περιβάλλοντος!")
