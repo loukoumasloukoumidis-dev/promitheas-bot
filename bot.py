@@ -175,7 +175,26 @@ def handle_voice(message):
     except Exception as e:
         bot.reply_to(message, f"Σφάλμα φωνητικού: {str(e)}")
 
-if __name__ == "__main__":
-    print("Ο Προμηθέας ξεκίνησε και λειτουργεί κανονικά...")
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Promitheas Bot is alive!")
+
+def run_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), SimpleHandler)
+    server.serve_forever()
+
+if __name__ == '__main__':
+    # Ξεκινάμε τον web server στο παρασκήνιο για να ικανοποιήσουμε το Render
+    server_thread = threading.Thread(target=run_server, daemon=True)
+    server_thread.start()
+    
+    print("Ο Προμηθέας ξεκίνησε και λειτουργεί!")
     bot.infinity_polling()
+    
   
