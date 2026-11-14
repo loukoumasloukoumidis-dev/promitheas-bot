@@ -8,7 +8,7 @@ from google.genai import types
 
 # 1. Βάλε εδώ τα κλειδιά σου
 TELEGRAM_BOT_TOKEN = "9026273282:AAFkBnN0kIeuD4oHzDlecQF8psH8hNyiSeY"
-GEMINI_API_KEY = "AQ.Ab8RN6KUrnxHP88KaGdrTPlIqhRfk4D2FtO6hbTipyRTcQdPJQ"
+GEMINI_API_KEY = "AQ.Ab8RN6JFhlLRnnQ7CT4CiNuVEAOQG1uccprPqkzk5vXp3_XT9w"
 
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 client = genai.Client(api_key=GEMINI_API_KEY)
