@@ -1,4 +1,27 @@
 import os
+import threading
+from flask import Flask
+
+# 1. Δημιουργία ενός απλού Flask server
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is alive and running!"
+
+def run_flask():
+    # Το Render δίνει αυτόματα την πόρτα μέσω της μεταβλητής περιβάλλοντος PORT
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+# 2. Ξεκινάμε τον Flask server σε ξεχωριστό thread για να μη μπλοκάρει το bot
+flask_thread = threading.Thread(target=run_flask)
+flask_thread.daemon = True
+flask_thread.start()
+
+# Από κάτω συνεχίζει κανονικά ο κώδικας του Telegram Bot σου...
+
+import os
 import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
