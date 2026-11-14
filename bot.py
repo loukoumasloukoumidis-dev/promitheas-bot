@@ -177,5 +177,5 @@ def handle_voice(message):
 
 if __name__ == "__main__":
     print("Ο Προμηθέας ξεκίνησε και λειτουργεί κανονικά...")
-    bot.infinity_polling(non_stop=True)
+    bot.infinity_polling()
   
