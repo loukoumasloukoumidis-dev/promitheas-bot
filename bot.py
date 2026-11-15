@@ -53,7 +53,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         # Χρήση του προτεινόμενου μοντέλου gemini-2.5-flash για γρήγορες απαντήσεις
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=user_message,
         )
         
