@@ -27,15 +27,13 @@ def home():
     return "Bot is running!"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Απάντηση στην εντολή /start"""
     user_name = update.effective_user.first_name
     await update.message.reply_text(
         f"Γεια σου {user_name}! Είμαι το bot σου με τη Groq (100% δωρεάν). "
-        "Υποστηρίζω κείμενο, ηχητικά μηνύματα και μπορώ να σου πω τον καιρό ή οτιδήποτε άλλο ζητήσεις!"
+        "Υποστηρίζω κείμενο, ηχητικά μηνύματα και γενικές γνώσεις!"
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Διαχείριση μηνυμάτων κειμένου"""
     user_text = update.message.text
     logger.info(f"Λήφθηκε μήνυμα κειμένου: {user_text}")
 
@@ -43,7 +41,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         response = client.chat.completions.create(
             model="llama-3.1-70b-versatile",
             messages=[
-                {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός. Μπορείς να απαντάς σε ερωτήσεις για τον καιρό, γενικές γνώσεις και ό,τι άλλο σε ρωτήσει ο χρήστης."},
+                {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός."},
                 {"role": "user", "content": user_text}
             ],
             max_tokens=1000
@@ -56,18 +54,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("Προέκυψαν τεχνικά προβλήματα κατά την επεξεργασία του αιτήματος.")
 
 async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Διαχείριση ηχητικών μηνυμάτων (Voice notes) μέσω Groq Whisper"""
     logger.info("Λήφθηκε ηχητικό μήνυμα...")
     voice = update.message.voice
     
-    # Κατέβασμα του αρχείου ήχου προσωρινά
     file = await context.bot.get_file(voice.file_id)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as temp_audio:
         await file.download_to_drive(temp_audio.name)
         temp_audio_path = temp_audio.name
 
     try:
-        # Απομαγνητοφώνηση με το Groq Whisper API
         with open(temp_audio_path, "rb") as audio_file:
             transcript = client.audio.transcriptions.create(
                 model="whisper-large-v3",
@@ -77,7 +72,6 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         user_text = transcript.text
         logger.info(f"Απομαγνητοφώνηση: {user_text}")
 
-        # Αποστολή του κειμένου στο Llama για απάντηση
         response = client.chat.completions.create(
             model="llama-3.1-70b-versatile",
             messages=[
@@ -95,12 +89,10 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         await update.message.reply_text("Προέκυψαν τεχνικά προβλήματα κατά την επεξεργασία του ηχητικού μηνύματος.")
     
     finally:
-        # Καθαρισμός του προσωρινού αρχείου
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
 def main() -> None:
-    """Εκκίνηση του Telegram Bot"""
     if not TELEGRAM_TOKEN:
         logger.error("Δεν βρέθηκε TELEGRAM_TOKEN στις μεταβλητές περιβάλλοντος!")
         return
@@ -112,7 +104,8 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.VOICE, handle_voice))
 
     logger.info("Εκκίνηση εφαρμογής Telegram...")
-    application.run_polling()
+    # Καθαρισμός τυχόν κολλημένων webhooks/sessions
+    application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     import threading
