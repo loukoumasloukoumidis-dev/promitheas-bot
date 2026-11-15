@@ -35,6 +35,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_text = update.message.text
+    if not user_text:
+        return
     logger.info(f"Λήφθηκε μήνυμα κειμένου: {user_text}")
 
     try:
@@ -47,7 +49,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             max_tokens=1000
         )
         reply_text = response.choices[0].message.content
-        await update.message.reply_text(reply_text)
+        if reply_text:
+            await update.message.reply_text(reply_text)
+        else:
+            await update.message.reply_text("Δεν μπόρεσα να παράγω απάντηση.")
 
     except Exception as e:
         logger.error(f"Σφάλμα κατά την επικοινωνία με τη Groq: {e}")
@@ -69,8 +74,12 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 file=audio_file
             )
         
-        user_text = transcript.text
+        user_text = transcript.text if transcript else ""
         logger.info(f"Απομαγνητοφώνηση: {user_text}")
+
+        if not user_text.strip():
+            await update.message.reply_text("Δεν μπόρεσα να ακούσω καθαρά το ηχητικό μήνυμα. Δοκίμασε ξανά!")
+            return
 
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -82,7 +91,10 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
         
         reply_text = response.choices[0].message.content
-        await update.message.reply_text(f"🎤 *Άκουσα:* {user_text}\n\n{reply_text}", parse_mode="Markdown")
+        if reply_text:
+            await update.message.reply_text(f"🎤 *Άκουσα:* {user_text}\n\n{reply_text}", parse_mode="Markdown")
+        else:
+            await update.message.reply_text(f"🎤 *Άκουσα:* {user_text}\n\n(Δεν υπήρξε απάντηση από το μοντέλο)")
 
     except Exception as e:
         logger.error(f"Σφάλμα κατά την απομαγνητοφώνηση/επεξεργασία ηχητικού: {e}")
