@@ -1,24 +1,25 @@
 import os
 import logging
+import tempfile
 from flask import Flask
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from openai import OpenAI
 
-# Ρύθμιση logging για να βλέπουμε τα μηνύματα στα logs του Render
+# Ρύθμιση logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Ανάκτηση των Tokens από τις Environment Variables του Render
+# Ανάκτηση Tokens
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
-# Αρχικοποίηση του OpenAI client
+# Αρχικοποίηση OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# Δημιουργία εφαρμογής Flask (απαραίτητη για να μένει ανοιχτό το bot στο Render)
+# Δημιουργία εφαρμογής Flask για το Render
 app = Flask(__name__)
 
 @app.route("/")
@@ -28,15 +29,52 @@ def home():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Απάντηση στην εντολή /start"""
     user_name = update.effective_user.first_name
-    await update.message.reply_text(f"Γεια σου {user_name}! Είμαι το bot σου με OpenAI. Πώς μπορώ να σε βοηθήσω;")
+    await update.message.reply_text(f"Γεια σου {user_name}! Είμαι το bot σου με OpenAI και υποστηρίζω και ηχητικά μηνύματα. Πώς μπορώ να σε βοηθήσω;")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Διαχείριση μηνυμάτων κειμένου και αποστολή στο ChatGPT"""
+    """Διαχείριση μηνυμάτων κειμένου"""
     user_text = update.message.text
-    logger.info(f"Λήφθηκε μήνυμα: {user_text}")
+    logger.info(f"Λήφθηκε μήνυμα κειμένου: {user_text}")
 
     try:
-        # Κλήση στο OpenAI API (χρησιμοποιούμε το gpt-4o-mini ή gpt-3.5-turbo για ταχύτητα και σταθερότητα)
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Είσαι ένας χρήσιμος και ευγενικός βοηθός."},
+                {"role": "user", "content": user_text}
+            ],
+            max_tokens=1000
+        )
+        reply_text = response.choices[0].message.content
+        await update.message.reply_text(reply_text)
+
+    except Exception as e:
+        logger.error(f"Σφάλμα κατά την επικοινωνία με το OpenAI: {e}")
+        await update.message.reply_text("Προέκυψαν τεχνικά προβλήματα κατά την επεξεργασία του αιτήματος.")
+
+async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Διαχείριση ηχητικών μηνυμάτων (Voice notes)"""
+    logger.info("Λήφθηκε ηχητικό μήνυμα...")
+    voice = update.message.voice
+    
+    # Κατέβασμα του αρχείου ήχου προσωρινά
+    file = await context.bot.get_file(voice.file_id)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as temp_audio:
+        await file.download_to_drive(temp_audio.name)
+        temp_audio_path = temp_audio.name
+
+    try:
+        # Απομαγνητοφώνηση με το OpenAI Whisper API
+        with open(temp_audio_path, "rb") as audio_file:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file
+            )
+        
+        user_text = transcript.text
+        logger.info(f"Απομαγνητοφώνηση: {user_text}")
+
+        # Αποστολή του κειμένου στο ChatGPT για απάντηση
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -47,11 +85,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         
         reply_text = response.choices[0].message.content
-        await update.message.reply_text(reply_text)
+        # Στέλνουμε τι κατάλαβε και την απάντηση
+        await update.message.reply_text(f"🎤 *Άκουσα:* {user_text}\n\n{reply_text}", parse_mode="Markdown")
 
     except Exception as e:
-        logger.error(f"Σφάλμα κατά την επικοινωνία με το OpenAI: {e}")
-        await update.message.reply_text("Προέκυψαν τεχνικά προβλήματα κατά την επεξεργασία του αιτήματος.")
+        logger.error(f"Σφάλμα κατά την απομαγνητοφώνηση/επεξεργασία ηχητικού: {e}")
+        await update.message.reply_text("Προέκυψαν τεχνικά προβλήματα κατά την επεξεργασία του ηχητικού μηνύματος.")
+    
+    finally:
+        # Καθαρισμός του προσωρινού αρχείου
+        if os.path.exists(temp_audio_path):
+            os.remove(temp_audio_path)
 
 def main() -> None:
     """Εκκίνηση του Telegram Bot"""
@@ -59,21 +103,19 @@ def main() -> None:
         logger.error("Δεν βρέθηκε TELEGRAM_TOKEN στις μεταβλητές περιβάλλοντος!")
         return
 
-    # Δημιουργία του Application του Telegram
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    # Ορισμός handlers για εντολές και μηνύματα
+    # Handlers για κείμενο, εντολές και ηχητικά
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(MessageHandler(filters.VOICE, handle_voice))
 
-    # Εκκίνηση του bot (Polling)
     logger.info("Εκκίνηση εφαρμογής Telegram...")
     application.run_polling()
 
 if __name__ == "__main__":
     import threading
     
-    # Ξεκινάμε το Flask σε ξεχωριστό thread για να περνάει τα health checks του Render
     def run_flask():
         port = int(os.environ.get("PORT", 10000))
         app.run(host="0.0.0.0", port=port)
@@ -82,5 +124,5 @@ if __name__ == "__main__":
     flask_thread.daemon = True
     flask_thread.start()
 
-    # Τρέχουμε το bot
     main()
+    
