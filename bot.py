@@ -41,7 +41,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.3-70b-specdec",  # Σύγχρονο, ενεργό μοντέλο
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός."},
                 {"role": "user", "content": user_text}
@@ -71,7 +71,8 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         with open(temp_audio_path, "rb") as audio_file:
             transcript = client.audio.transcriptions.create(
                 model="whisper-large-v3-turbo",
-                file=audio_file
+                file=("audio.ogg", audio_file.read()),
+                language="el"
             )
         
         user_text = transcript.text if transcript else ""
@@ -82,7 +83,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             return
 
         response = client.chat.completions.create(
-            model="llama-3.3-70b-specdec",  # Σύγχρονο, ενεργό μοντέλο
+            model="llama-3.1-8b-instant",  # Ενημερωμένο ενεργό μοντέλο
             messages=[
                 {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός."},
                 {"role": "user", "content": user_text}
