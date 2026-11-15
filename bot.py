@@ -51,9 +51,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
     
     try:
-        # Χρήση του προτεινόμενου μοντέλου gemini-1.5-flash για γρήγορες απαντήσεις
+        # Χρήση του προτεινόμενου μοντέλου gemini-3.8-flash για γρήγορες απαντήσεις
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-3.8-flash",
             contents=user_message,
         )
         
