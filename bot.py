@@ -39,7 +39,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός."},
                 {"role": "user", "content": user_text}
@@ -73,7 +73,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         logger.info(f"Απομαγνητοφώνηση: {user_text}")
 
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός."},
                 {"role": "user", "content": user_text}
@@ -104,7 +104,6 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.VOICE, handle_voice))
 
     logger.info("Εκκίνηση εφαρμογής Telegram...")
-    # Καθαρισμός τυχόν κολλημένων webhooks/sessions
     application.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
