@@ -41,7 +41,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-70b-versatile",
             messages=[
                 {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός. Μπορείς να απαντάς σε ερωτήσεις για τον καιρό, γενικές γνώσεις και ό,τι άλλο σε ρωτήσει ο χρήστης."},
                 {"role": "user", "content": user_text}
@@ -79,7 +79,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
         # Αποστολή του κειμένου στο Llama για απάντηση
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-70b-versatile",
             messages=[
                 {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός."},
                 {"role": "user", "content": user_text}
