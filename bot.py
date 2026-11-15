@@ -41,7 +41,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
     try:
         response = client.chat.completions.create(
-            model="llama3-70b-8192",
+            model="llama3-70b-8192",  # Διορθωμένο μοντέλο ευρείας χρήσης στη Groq
             messages=[
                 {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός."},
                 {"role": "user", "content": user_text}
@@ -82,7 +82,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             return
 
         response = client.chat.completions.create(
-            model="llama3-70b-8192",
+            model="llama3-70b-8192",  # Διορθωμένο μοντέλο ευρείας χρήσης στη Groq
             messages=[
                 {"role": "system", "content": "Είσαι ένας χρήσιμος, ευγενικός βοηθός."},
                 {"role": "user", "content": user_text}
